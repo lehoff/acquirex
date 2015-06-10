@@ -1,0 +1,1 @@
+%{"gproc": {:git, "https://github.com/uwiger/gproc.git", "509be53f0813464d462266d1cf112d8a6499be6a", [branch: "master"]}}
