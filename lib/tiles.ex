@@ -1,8 +1,8 @@
 defmodule Acquirex.Tiles do
 
-  @type row :: 1..12
-  @type column :: ?a..?i
-  @type t :: {row, column}
+  @type column :: 1..12
+  @type row :: ?a..?i
+  @type t :: {column, row}  # Acquire has a weird coordinate system :-(
 
   def start_link() do
     Agent.start_link(fn -> all |> Enum.shuffle end, name: __MODULE__)
@@ -13,6 +13,6 @@ defmodule Acquirex.Tiles do
   end
 
   def all do
-    for row <- 1..12, column <- ?a..?i, do: {row, [column]}
+    for column <- 1..12, row <- ?a..?i, do: {column, [row]}
   end
 end

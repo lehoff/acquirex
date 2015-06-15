@@ -14,7 +14,8 @@ defmodule Acquirex.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger, :gproc]]
+    [applications: [:logger, :gproc],
+     mod: {Acquirex.Application, []}]
   end
 
   # Dependencies can be Hex packages:
