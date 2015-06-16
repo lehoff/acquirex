@@ -6,7 +6,7 @@ defmodule Acquirex.Corporation.Supervisor do
   end
 
   def init(:no_args) do
-    children = for c <- Acquirex.Corporation.all do
+    children = for c <- Acquirex.Corporation.corporations do
       worker(Acquirex.Corporation, [c], id: c)
     end
     supervise(children, strategy: :one_for_one)

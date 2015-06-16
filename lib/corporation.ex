@@ -3,7 +3,8 @@ defmodule Acquirex.Corporation do
   @behaviour :gen_fsm
 
   alias Acquirex.Tiles
-  
+  alias Acquirex.Space
+
   @type t :: Sackson | Zeta | Hydra | Fusion | America | Phoenix | Quantum
   @type size :: 0..108
   @type status :: :inactive | :active | :safe
@@ -12,13 +13,27 @@ defmodule Acquirex.Corporation do
                Hydra: 1, Fusion: 1, America: 1,
                Phoenix: 2, Quantum: 2}
 
-  def all() do
+  def corporations() do
     [ Sackson, Zeta, Hydra, Fusion, America, Phoenix, Quantum ]
   end
   
   @spec start_link(t) :: Agent.on_start
   def start_link(t) do
     :gen_fsm.start_link({:local, t}, __MODULE__, [t], [])
+  end
+
+  def incorporable?(coord) do
+    case Space.move_outcome(coord) do
+      Incorporate ->
+        statuses = for c <- corporations(), do: {c, status(c)}
+        for {c, :inactive} <- statuses, do: c
+      _ ->
+        []
+    end
+  end
+
+  def price(t) do
+    :gen_fsm.sync_send_all_state_event(t, :price)
   end
 
   def status(t) do
@@ -39,9 +54,11 @@ defmodule Acquirex.Corporation do
 
   @spec tier_bonus(1..11) :: {non_neg_integer, non_neg_integer}
   def tier_bonus(tier) do
-    majority = (tier + 1)*1_000
+    majority = majority(tier)
     {majority, div(majority, 2)}
   end
+
+  defp majority(tier), do: (tier+1)*1_000
 
   defp raw_tier(count) when count <=  6, do: count-1
   defp raw_tier(count) when count <= 10, do: 5
@@ -49,6 +66,10 @@ defmodule Acquirex.Corporation do
   defp raw_tier(count) when count <= 30, do: 7
   defp raw_tier(count) when count <= 40, do: 8
   defp raw_tier(count) when count >= 41, do: 9
+
+  defp tier_price(tier) do
+    div(majority(tier), 10)
+  end
 
   def init(t) do
     {:ok, :inactive, %{name: t, members: []}}
@@ -77,6 +98,10 @@ defmodule Acquirex.Corporation do
   def handle_sync_event(:status, _from, state_name, s) do
     reply = state_name
     {:reply, reply, state_name, s}
+  end
+
+  def handle_sync_event(:price, _from, state_name, s) do
+    price = tier(s.name, length s.members) |> tier_price
   end
 
   def handle_event(_, _state_Name, s) do

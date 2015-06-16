@@ -6,8 +6,14 @@ defmodule Acquirex.Supervisor do
   end
 
   def init(:no_args) do
-    children = [supervisor(Acquirex.Corporation.Supervisor, []),
-                supervisor(Acquirex.Space.Supervisor, [])]
+    children = [worker(Acquirex.Bank, []),
+                worker(Acquirex.Game, []),
+                worker(Acquirex.Turn, []),
+                worker(Acquirex.Tiles, []),
+                supervisor(Acquirex.Player.Supervisor, []),
+                supervisor(Acquirex.Corporation.Supervisor, []),
+                supervisor(Acquirex.Space.Supervisor, [])
+                ]
     supervise(children, strategy: :one_for_one)
   end
 

@@ -11,7 +11,8 @@ defmodule Acquirex.Space do
     Agent.get({:via, :gproc, space_name(coord)}, fn s -> s end)
   end
 
-  def fill_consequence(coord) do
+  @spec move_outcome(Tiles.t) :: Nothing | Incorporate | {Merger, [Corp.t]}
+  def move_outcome(coord) do
     ns = neighbours(coord)
     n_status = for n <- ns, do: status(n)
     cond do
@@ -80,6 +81,6 @@ defmodule Acquirex.Space do
 
   defp row_above([row]), do: [row-1]
 
-  defp row_below([row]), do: [row+1]
+  def row_below([row]), do: [row+1]
   
 end
