@@ -16,6 +16,10 @@ defmodule Acquirex.Tiles do
     for row <- ?a..?i, column <- 1..12,  do: {column, [row]}
   end
 
+  def to_string({column, row}) do
+    Integer.to_string(column) <> String.Chars.to_string(row)
+  end
+
   def greater_than({c1, r1}, {c2,r2}) do
     r2 > r1 or c2 > c1
   end

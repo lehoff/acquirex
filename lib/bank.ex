@@ -33,6 +33,11 @@ defmodule Acquirex.Bank do
     Agent.get(__MODULE__, fn s -> s end)
   end
 
+  def print() do
+    IO.write "Bank:"
+    IO.inspect(counts())
+  end
+
   defp handle_buy(s, player, corp) do
     case s[corp] do
       0 -> {:no_stocks_left, s}

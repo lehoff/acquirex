@@ -16,7 +16,13 @@ defmodule Acquirex.Corporation do
   def corporations() do
     [ Sackson, Zeta, Hydra, Fusion, America, Phoenix, Quantum ]
   end
-  
+
+  def corp_name(corp) do
+    corp |>
+    Atom.to_string |>
+    String.to_char_list |> Enum.drop(7) |> String.Chars.to_string
+  end
+
   @spec start_link(t) :: Agent.on_start
   def start_link(t) do
     :gen_fsm.start_link({:local, t}, __MODULE__, [t], [])

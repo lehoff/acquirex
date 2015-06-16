@@ -45,17 +45,27 @@ defmodule Acquirex.Game do
     {:next_state, :setup, %{s | players: s.players ++ [player]}}
   end
 
-  def print() do
+  def print_board() do
     print_column_header
     print_rows
     print_column_header
   end
 
+  def print() do
+    print_board
+    Acquirex.Bank.print
+    for p <- players(), do: Acquirex.Player.print p
+  end
  
   def setup(:begin, s) do
     initial_tiles = for p <- s.players, do: {p, Acquirex.Tiles.draw}
     [{first,_}|_] = sort_initial(initial_tiles)
     for {_,t} <- initial_tiles, do: Acquirex.Space.fill(t)
+    for p <- s.players do
+      for _ <- 1..6 do
+        Acquirex.Player.Tiles.add(p, Acquirex.Tiles.draw)
+      end
+    end
     {:next_state, :ongoing, %{s| players: rotate_until(first, s.players)}}
   end
 

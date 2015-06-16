@@ -25,7 +25,7 @@ defmodule Acquirex.Turn do
           [] ->
             buy_stocks(player)
           corps ->
-            Player.info({:choose_corporation, corps})
+            Player.info(player, {:choose_corporation, corps})
             {:next_state, :await_incorporation_choice, %{player: player, tile: tile, corps: corps}}
         end
     end

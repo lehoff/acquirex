@@ -28,6 +28,7 @@ defmodule Acquirex.Space do
     end
   end
 
+  
   def fill(coord) do
     Agent.cast({:via, :gproc, space_name(coord)}, fn Empty -> Full end)
   end
@@ -81,6 +82,6 @@ defmodule Acquirex.Space do
 
   defp row_above([row]), do: [row-1]
 
-  def row_below([row]), do: [row+1]
+  defp row_below([row]), do: [row+1]
   
 end
