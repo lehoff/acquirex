@@ -67,6 +67,7 @@ defmodule Acquirex.Game do
   def print() do
     print_board
     Acquirex.Bank.print
+    for c <- Acquirex.Corporation.corporations, do: Acquirex.Corporation.print c
     for p <- players(), do: Acquirex.Player.print p
   end
 

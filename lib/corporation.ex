@@ -23,9 +23,13 @@ defmodule Acquirex.Corporation do
     String.to_char_list |> Enum.drop(7) |> String.Chars.to_string
   end
 
+  def print(t) do
+    :gen_fsm.send_all_state_event(t, :print)
+  end
+
   @spec start_link(t) :: Agent.on_start
   def start_link(t) do
-    :gen_fsm.start_link({:local, t}, __MODULE__, [t], [])
+    :gen_fsm.start_link({:local, t}, __MODULE__, t, [])
   end
 
   def incorporable?(coord) do
@@ -107,11 +111,17 @@ defmodule Acquirex.Corporation do
   end
 
   def handle_sync_event(:price, _from, state_name, s) do
-    price = tier(s.name, length s.members) |> tier_price
+    {:reply, price_from_state(s), state_name, s}
   end
 
-  def handle_event(_, _state_Name, s) do
-    {:stop, :unexecpted_event, s}
+  defp price_from_state(%{members: []}), do: 0
+  defp price_from_state(s) do
+    tier(s.name, length s.members) |> tier_price
+  end
+
+  def handle_event(:print, state_name, s) do
+    IO.puts "#{corp_name(s.name)}: #{length s.members}/$#{price_from_state s}"
+    {:next_state, state_name, s}
   end
 
   def terminate(_reason, _state_name, _s) do
