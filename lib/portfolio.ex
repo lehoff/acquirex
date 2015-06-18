@@ -6,7 +6,8 @@ defmodule Acquirex.Player.Portfolio do
   end
 
   def add(player, corp, count \\ 1) do
-    Agent.cast(via_name(player), fn s -> %{s| corp: s[corp]+count} end)
+    #    Agent.cast(via_name(player), fn s -> %{s| corp: s[corp]+count} end)
+    Agent.cast(via_name(player), fn s -> Dict.put(s, corp, s[corp]+count) end)
   end
 
   def count(player, corp) do
@@ -18,7 +19,8 @@ defmodule Acquirex.Player.Portfolio do
   end
 
   def delete(player, corp, count) do
-    Agent.cast(via_name(player), fn s -> %{s | corp: s[corp] - count} end)
+    #    Agent.cast(via_name(player), fn s -> %{s | corp: s[corp] - count} end)
+    Agent.cast(via_name(player), fn s -> Dict.put(s, corp, s[corp] - count) end)
   end
 
 

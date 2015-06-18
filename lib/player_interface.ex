@@ -15,7 +15,8 @@ defmodule Acquirex.Player.Interface do
   end
 
   def handle_cast({:info, msg}, s) do
-    IO.puts "#{s.name} received info: #{IO.inspect(msg)}"
+#    IO.puts "#{s.name} received info: #{IO.inspect(msg)}"
+    :io.format("~p received info: ~p~n", [s.name, msg])
     {:noreply, s}
   end
 

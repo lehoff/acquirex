@@ -45,18 +45,6 @@ defmodule Acquirex.Game do
     {:next_state, :setup, %{s | players: s.players ++ [player]}}
   end
 
-  def print_board() do
-    print_column_header
-    print_rows
-    print_column_header
-  end
-
-  def print() do
-    print_board
-    Acquirex.Bank.print
-    for p <- players(), do: Acquirex.Player.print p
-  end
- 
   def setup(:begin, s) do
     initial_tiles = for p <- s.players, do: {p, Acquirex.Tiles.draw}
     [{first,_}|_] = sort_initial(initial_tiles)
@@ -67,6 +55,25 @@ defmodule Acquirex.Game do
       end
     end
     {:next_state, :ongoing, %{s| players: rotate_until(first, s.players)}}
+  end
+
+  def print_board() do
+    print_column_header
+    print_rows
+    print_column_header
+    print_current_order
+  end
+
+  def print() do
+    print_board
+    Acquirex.Bank.print
+    for p <- players(), do: Acquirex.Player.print p
+  end
+
+  def print_current_order do
+    co = current_order
+    co_str = co |> Enum.map(&Atom.to_string/1) |> Enum.join ", "
+    IO.puts "#{co_str}"
   end
 
   def ongoing(:current_order, _from, s) do

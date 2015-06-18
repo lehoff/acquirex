@@ -5,7 +5,7 @@ defmodule Acquirex.Turn do
   alias Acquirex.Player
   alias Acquirex.Corporation
   alias Acquirex.Bank
-
+ 
   def start_link() do
     :gen_fsm.start_link({:local, __MODULE__}, __MODULE__, :no_args, [])        
   end
@@ -16,6 +16,15 @@ defmodule Acquirex.Turn do
     :gen_fsm.send_event(__MODULE__, {:move, player, tile})
   end
 
+  def inc_choice(player, corp) do
+    :gen_fsm.send_event(__MODULE__, {:inc_choice, player, corp})
+  end
+
+  def buy_choice(player, corps) when length(corps)<=3 do
+    :gen_fsm.send_event(__MODULE__, {:buy_choice, player, corps})
+  end
+
+  # states
   def idle({:move, player, tile}, nil) do
     case Space.move_outcome(tile) do
       Nothing ->
@@ -30,10 +39,11 @@ defmodule Acquirex.Turn do
         end
     end
   end
-
+  
   def await_incorporation_choice({:inc_choice, player, corp}, %{player: player}=s) do
     if corp in s.corps do
-      founder_stock = Bank.founder_stock(player, corp)
+      Space.join(s.tile, corp)
+      founder_stock = Bank.founders_stock(player, corp)
       Player.info(player, {:founder, corp, founder_stock})
       buy_stocks(player)
     else
@@ -42,8 +52,8 @@ defmodule Acquirex.Turn do
     end
   end
 
-  def buy_stocks(player) do
-    Player.info(:buy_stock)
+  defp buy_stocks(player) do
+    Player.info(player, :buy_stock) # @todo: should send a list of active corporations
     {:next_state, :await_buy_choice, %{player: player}}
   end
 
