@@ -14,6 +14,7 @@ defmodule Acquirex.Turn do
 
 
   def move(player, tile) do
+    IO.puts "#{inspect player} is placing #{inspect tile}"
     :gen_fsm.send_event(__MODULE__, {:move, player, tile})
   end
 
@@ -47,6 +48,9 @@ defmodule Acquirex.Turn do
                     Player.Tiles.remove(player, tile)
                     {:next_state, :await_incorporation_choice, %{player: player, tile: tile, corps: corps}}
                 end
+              {Merger, corps} ->
+                # @todo: handle the merger
+                {:next_state, :idle, nil}
             end
           true ->
             Player.info(player, :incorrect_tile)

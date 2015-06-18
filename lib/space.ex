@@ -19,16 +19,20 @@ defmodule Acquirex.Space do
       [_, _, _, Full] ->
         Incorporate
       [_, _, {Incorporated, _}, {Incorporated,_}] ->
-        corps = for {Incorporated, c} <- n_status, do: c
+        corps = (for {Incorporated, c} <- n_status, do: c) |> Enum.uniq
         {Merger, corps}
       _ ->
         Nothing
     end
   end
 
+  def neighbour_status(coord) do
+    (for n <- neighbours(coord), do: status(n))
+    |> Enum.sort
+  end
   
   def fill(coord) do
-    Agent.cast({:via, :gproc, space_name(coord)}, fn Empty -> Full end)
+    Agent.cast({:via, :gproc, space_name(coord)}, fn _s -> handle_fill(coord) end)
   end
 
   def incorporate(coord, corp) do
@@ -37,6 +41,19 @@ defmodule Acquirex.Space do
 
   def join(coord, corp) do
     Agent.cast({:via, :gproc, space_name(coord)}, fn s -> handle_join(s, coord, corp) end)
+  end
+
+  # fill will only happen if the move outcome is Nothing
+  # could consider having a Join outcome at some point
+  defp handle_fill(coord) do
+    case neighbour_status(coord) do
+      [_, _, _, {Incorporated, c}] ->
+        for n <- neighbours(coord), do: join(n, c)
+        Corporation.join(c, coord)
+        {Incorporated, c}
+      _ ->
+        Full
+    end
   end
 
   defp handle_incorporate(coord, corp) do
@@ -59,26 +76,13 @@ defmodule Acquirex.Space do
     {:n, :l, {__MODULE__, coord}}
   end
 
-  defp neighbours({1,'a'}),  do: [{1,'b'}, {2,'b'}]
-  defp neighbours({1,'i'}),  do: [{1,'h'}, {2,'i'}]
-  defp neighbours({12,'a'}), do: [{11,'a'}, {12,'b'}]
-  defp neighbours({12,'i'}), do: [{11,'i'}, {12,'h'}]
-  defp neighbours({1,row}),  do: [{1, row_above row},
-                                  {1, row_below row},
-                                  {2, row}]
-  defp neighbours({12,row}), do: [{12, row_above row},
-                                  {12, row_below row},
-                                  {11, row}]
-  defp neighbours({column,'a'}), do: [{column-1,'a'},
-                                      {column+1,'a'},
-                                      {column,'b'}]
-  defp neighbours({column,'i'}), do: [{column-1,'i'},
-                                      {column+1,'i'},
-                                      {column,'h'}]
-  defp neighbours({column, row}), do: [{column-1, row},
-                                       {column+1, row},
-                                       {column, row_above row},
-                                       {column, row_below row}]
+  def neighbours({column, [c]=row}) when column in 1..12 and c in ?a..?i do
+    [{column-1, row},
+     {column+1, row},
+     {column, row_above row},
+     {column, row_below row}]
+  end
+  def neighbours({_,_}), do: []
 
   defp row_above([row]), do: [row-1]
 

@@ -34,7 +34,8 @@ defmodule Acquirex.Corporation do
 
   def active_corps() do
     all_statuses() |>
-      Enum.filter(fn {_c,s} -> s != :inactive end)
+      Enum.filter(fn {_c,s} -> s != :inactive end) |>
+      Enum.map(fn {c,_} -> c end)
   end
 
   def incorporable?(coord) do
