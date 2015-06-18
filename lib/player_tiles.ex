@@ -20,7 +20,7 @@ defmodule Acquirex.Player.Tiles do
   def remove(player, tile) do
     Agent.cast(via_name(player), &(List.delete(&1, tile)))
   end
-  
+
   defp via_name(player) do
     {:via, :gproc, tiles_name(player)}
   end

@@ -5,7 +5,8 @@ defmodule Acquirex.Turn do
   alias Acquirex.Player
   alias Acquirex.Corporation
   alias Acquirex.Bank
- 
+  alias Acquirex.Game
+
   def start_link() do
     :gen_fsm.start_link({:local, __MODULE__}, __MODULE__, :no_args, [])        
   end
@@ -26,23 +27,40 @@ defmodule Acquirex.Turn do
 
   # states
   def idle({:move, player, tile}, nil) do
-    case Space.move_outcome(tile) do
-      Nothing ->
-        buy_stocks(player)
-      Incorporate ->
-        case Corporation.incorporable?(tile) do
-          [] ->
-            buy_stocks(player)
-          corps ->
-            Player.info(player, {:choose_corporation, corps})
-            {:next_state, :await_incorporation_choice, %{player: player, tile: tile, corps: corps}}
+    case Game.current_order do
+      [^player|_] ->
+        cond do
+          tile in Player.Tiles.tiles(player) ->
+            case Space.move_outcome(tile) do
+              Nothing ->
+                Space.fill(tile)
+                Player.Tiles.remove(player, tile)
+                buy_stocks(player)
+              Incorporate ->
+                case Corporation.incorporable?(tile) do
+                  [] ->
+                    Space.fill(tile)
+                    Player.Tiles.remove(player, tile)
+                    buy_stocks(player)
+                  corps ->
+                    Player.info(player, {:choose_corporation, corps})
+                    Player.Tiles.remove(player, tile)
+                    {:next_state, :await_incorporation_choice, %{player: player, tile: tile, corps: corps}}
+                end
+            end
+          true ->
+            Player.info(player, :incorrect_tile)
+            {:next_state, :idle, nil}
         end
+      _ ->
+        Player.info(player, :not_your_turn)
+        {:next_state, :idle, nil}
     end
   end
   
   def await_incorporation_choice({:inc_choice, player, corp}, %{player: player}=s) do
     if corp in s.corps do
-      Space.join(s.tile, corp)
+      Space.incorporate(s.tile, corp)
       founder_stock = Bank.founders_stock(player, corp)
       Player.info(player, {:founder, corp, founder_stock})
       buy_stocks(player)
@@ -53,13 +71,30 @@ defmodule Acquirex.Turn do
   end
 
   defp buy_stocks(player) do
-    Player.info(player, :buy_stock) # @todo: should send a list of active corporations
-    {:next_state, :await_buy_choice, %{player: player}}
+    case Acquirex.Corporation.active_corps do
+      [] ->
+        replenish_tiles(player)
+        Acquirex.Game.next_turn
+        {:next_state, :idle, nil}
+      corps ->
+        Player.info(player, {:buy_stock, corps}) # @todo: should send a list of active corporations
+        {:next_state, :await_buy_choice, %{player: player}}
+    end
   end
 
   def await_buy_choice({:buy_choice, player, corps}, %{player: player}=s) do
     buy_results = for c <- corps, do: Bank.buy(player, c)
-    Player.info({:buy_results, buy_results})
+    Player.info(player, {:buy_results, buy_results})
+    replenish_tiles(player)
+    Acquirex.Game.next_turn
+    {:next_state, :idle, nil}
+  end
+
+  def replenish_tiles(player) do
+    for _ <- 1..(6 - Player.Tiles.count(player)) do
+      tile = Acquirex.Tiles.draw()
+      Player.Tiles.add(player, tile)
+    end
   end
 
   ## gen_fsm callbacks

@@ -10,7 +10,15 @@ defmodule AcquirexTest do
     for p <- players, do: PlayerSup.new_player p
     Game.begin
     Game.print
-    Turn.move :amy, {1, }
+    Turn.move :bob, {2, 'g'}
+    Turn.move :amy, {2, 'g'}
+    Turn.move :amy, {1, 'g'}
+    Game.print
+    Turn.move :bob, {2, 'g'}
+    Turn.inc_choice :bob, Sackson
+    Game.print
+    Turn.buy_choice :bob, [Sackson, Sackson, Sackson]
+    Game.print
     assert 1 == 1
   end
 end

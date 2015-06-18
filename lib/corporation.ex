@@ -9,9 +9,9 @@ defmodule Acquirex.Corporation do
   @type size :: 0..108
   @type status :: :inactive | :active | :safe
 
-  @base_tier %{Sackson: 0, Zeta: 0,
-               Hydra: 1, Fusion: 1, America: 1,
-               Phoenix: 2, Quantum: 2}
+  @base_tier %{Sackson =>  0, Zeta => 0,
+               Hydra => 1, Fusion => 1, America => 1,
+               Phoenix => 2, Quantum => 2}
 
   def corporations() do
     [ Sackson, Zeta, Hydra, Fusion, America, Phoenix, Quantum ]
@@ -32,14 +32,22 @@ defmodule Acquirex.Corporation do
     :gen_fsm.start_link({:local, t}, __MODULE__, t, [])
   end
 
+  def active_corps() do
+    all_statuses() |>
+      Enum.filter(fn {_c,s} -> s != :inactive end)
+  end
+
   def incorporable?(coord) do
     case Space.move_outcome(coord) do
       Incorporate ->
-        statuses = for c <- corporations(), do: {c, status(c)}
-        for {c, :inactive} <- statuses, do: c
+        for {c, :inactive} <- all_statuses, do: c
       _ ->
         []
     end
+  end
+
+  def all_statuses() do
+    for c <- corporations(), do: {c, status(c)}
   end
 
   def price(t) do
@@ -120,7 +128,7 @@ defmodule Acquirex.Corporation do
   end
 
   def handle_event(:print, state_name, s) do
-    IO.puts "#{corp_name(s.name)}: #{length s.members}/$#{price_from_state s}"
+    IO.puts "#{inspect corp_name(s.name)}: #{inspect(length s.members)}/$#{inspect(price_from_state s)}"
     {:next_state, state_name, s}
   end
 

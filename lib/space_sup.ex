@@ -7,7 +7,7 @@ defmodule Acquirex.Space.Supervisor do
 
   def init(:no_args) do
     children =
-      for t <- Acquirex.Tiles.all do
+      for t <- Acquirex.Tiles.extended_all do
       worker(Acquirex.Space, [t], id: t)
     end
     supervise(children, strategy: :one_for_one)

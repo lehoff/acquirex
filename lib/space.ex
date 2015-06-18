@@ -1,7 +1,7 @@
 defmodule Acquirex.Space do
 
-  alias Acquirex.Corporation, as: Corp
-  @type status :: Empty | Full | {Incorporated, Corp.t}
+  alias Acquirex.Corporation
+  @type status :: Empty | Full | {Incorporated, Corporation.t}
 
   def start_link(coord) do
     Agent.start_link(fn -> Empty end, name: {:via, :gproc, space_name(coord)})
@@ -11,20 +11,18 @@ defmodule Acquirex.Space do
     Agent.get({:via, :gproc, space_name(coord)}, fn s -> s end)
   end
 
-  @spec move_outcome(Tiles.t) :: Nothing | Incorporate | {Merger, [Corp.t]}
+  @spec move_outcome(Tiles.t) :: Nothing | Incorporate | {Merger, [Corporation.t]}
   def move_outcome(coord) do
     ns = neighbours(coord)
     n_status = for n <- ns, do: status(n)
-    cond do
-      n_status == List.duplicate(Empty, length ns) ->
-        Nothing
-      Enum.all?(n_status, fn s -> not match?({Incorporated, _}, s) end) ->
+    case Enum.sort(n_status) do
+      [_, _, _, Full] ->
         Incorporate
-      true ->
-        case Enum.filter(n_status, &match?({Incorporated, _}, &1)) do
-          [_] -> Nothing
-          corps -> {Merger, corps}
-        end
+      [_, _, {Incorporated, _}, {Incorporated,_}] ->
+        corps = for {Incorporated, c} <- n_status, do: c
+        {Merger, corps}
+      _ ->
+        Nothing
     end
   end
 
@@ -34,7 +32,7 @@ defmodule Acquirex.Space do
   end
 
   def incorporate(coord, corp) do
-    Agent.cast({:via, :gproc, space_name(coord)}, fn s -> handle_incorporate(coord, corp) end)
+    Agent.cast({:via, :gproc, space_name(coord)}, fn _s -> handle_incorporate(coord, corp) end)
   end
 
   def join(coord, corp) do
@@ -44,12 +42,14 @@ defmodule Acquirex.Space do
   defp handle_incorporate(coord, corp) do
     ns = neighbours(coord)
     for n <- ns, do: join(n, corp)
+    Corporation.join(corp, coord)
     {Incorporated, corp}
   end
 
   defp handle_join(Full, coord, corp) do
     ns = neighbours(coord)
     for n <- ns, do: join(n, corp)
+    Corporation.join(corp, coord)
     {Incorporated, corp}
   end
 
