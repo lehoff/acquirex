@@ -16,8 +16,8 @@ defmodule Acquirex.Space do
     case neighbour_status(coord) do
       [_, _, _, Full] ->
         Incorporate
-      [_, _, {Incorporated, _}, {Incorporated,_}] ->
-        corps = (for {Incorporated, c} <- n_status, do: c) |> Enum.uniq
+      [_, _, {Incorporated, _}, {Incorporated,_}] = ns ->
+        corps = (for {Incorporated, c} <- ns, do: c) |> Enum.uniq
         {Merger, corps}
       _ ->
         Nothing

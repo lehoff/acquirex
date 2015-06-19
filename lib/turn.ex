@@ -32,26 +32,7 @@ defmodule Acquirex.Turn do
       [^player|_] ->
         cond do
           tile in Player.Tiles.tiles(player) ->
-            case Space.move_outcome(tile) do
-              Nothing ->
-                Space.fill(tile)
-                Player.Tiles.remove(player, tile)
-                buy_stocks(player)
-              Incorporate ->
-                case Corporation.incorporable?(tile) do
-                  [] ->
-                    Space.fill(tile)
-                    Player.Tiles.remove(player, tile)
-                    buy_stocks(player)
-                  corps ->
-                    Player.info(player, {:choose_corporation, corps})
-                    Player.Tiles.remove(player, tile)
-                    {:next_state, :await_incorporation_choice, %{player: player, tile: tile, corps: corps}}
-                end
-              {Merger, corps} ->
-                # @todo: handle the merger
-                {:next_state, :idle, nil}
-            end
+            handle_move(player, tile)
           true ->
             Player.info(player, :incorrect_tile)
             {:next_state, :idle, nil}
@@ -61,7 +42,31 @@ defmodule Acquirex.Turn do
         {:next_state, :idle, nil}
     end
   end
-  
+
+def handle_move(player, tile) do
+  case Space.move_outcome(tile) do
+    Nothing ->
+      Space.fill(tile)
+      Player.Tiles.remove(player, tile)
+      buy_stocks(player)
+    Incorporate ->
+      case Corporation.incorporable?(tile) do
+        [] ->
+          Space.fill(tile)
+          Player.Tiles.remove(player, tile)
+          buy_stocks(player)
+        corps ->
+          Player.info(player, {:choose_corporation, corps})
+          Player.Tiles.remove(player, tile)
+          {:next_state, :await_incorporation_choice, %{player: player, tile: tile, corps: corps}}
+      end
+    {Merger, corps} ->
+      # @todo: handle the merger
+      {:next_state, :idle, nil}
+  end
+
+end
+
   def await_incorporation_choice({:inc_choice, player, corp}, %{player: player}=s) do
     if corp in s.corps do
       Space.incorporate(s.tile, corp)
