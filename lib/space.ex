@@ -13,9 +13,7 @@ defmodule Acquirex.Space do
 
   @spec move_outcome(Tiles.t) :: Nothing | Incorporate | {Merger, [Corporation.t]}
   def move_outcome(coord) do
-    ns = neighbours(coord)
-    n_status = for n <- ns, do: status(n)
-    case Enum.sort(n_status) do
+    case neighbour_status(coord) do
       [_, _, _, Full] ->
         Incorporate
       [_, _, {Incorporated, _}, {Incorporated,_}] ->
